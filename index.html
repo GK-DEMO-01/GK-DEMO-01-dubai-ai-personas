@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dubai AI Centre — Personas</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #e8ecf0;
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+}
+
+/* ── Colour tokens ── */
+.blue   { --col:#1a5fa8; --mid:#2d7dd2; --light:#dce9f8; --bg:#f0f5fc; }
+.green  { --col:#166534; --mid:#16a34a; --light:#dcfce7; --bg:#f0fdf4; }
+.orange { --col:#c45c00; --mid:#e87722; --light:#fde8d0; --bg:#fff7f0; }
+.purple { --col:#6b21a8; --mid:#9333ea; --light:#ecdffe; --bg:#f7f0ff; }
+
+/* ── Thumbnail strip ── */
+.thumb-strip {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+.thumb-btn {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; cursor: pointer; background: none; border: none; padding: 0;
+}
+.thumb-btn:hover .thumb-ring { transform: translateY(-3px); }
+.thumb-ring {
+  width: 62px; height: 62px; border-radius: 50%;
+  border: 3px solid #ccc; padding: 3px;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+}
+.thumb-btn.active .thumb-ring {
+  border-color: var(--col);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--col);
+}
+.thumb-av {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: var(--col); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: #fff; position: relative;
+}
+.thumb-av img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+}
+.thumb-name {
+  font-size: 11px; font-weight: 600; color: #555;
+  text-align: center; max-width: 72px; line-height: 1.2;
+}
+
+/* ── Card stage (perspective wrapper) ── */
+.card-stage {
+  perspective: 1200px;
+  width: 100%; max-width: 960px;
+  margin: 0 auto; display: none;
+}
+.card-stage.visible { display: block; }
+
+.card-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.4,0,.2,1);
+}
+.card-inner.flipped { transform: rotateY(180deg); }
+
+/* ── Card face shell ──
+   The face is a flex ROW: .ch (sidebar) + .cb (scrollable body).
+   The flip-corner is position:absolute on the FACE (not inside .cb)
+   so it always sits at the same corner regardless of scroll. ── */
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 16px;
+  overflow: hidden;                /* clips rounded corners */
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  background: #fff;
+  display: flex;
+  flex-direction: column;         /* stack on narrow screens */
+  position: relative;             /* anchor for flip-corner */
+}
+.card-face.back {
+  position: absolute; inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* Wide: side-by-side */
+@media (min-width: 640px) {
+  .card-face { flex-direction: row; align-items: stretch; }
+}
+
+/* ── Card header / sidebar ── */
+.ch {
+  background: linear-gradient(160deg, var(--col) 0%, var(--mid) 100%);
+  padding: 28px 22px 80px;        /* bottom pad clears flip corner */
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  flex-shrink: 0;
+  position: relative;
+}
+@media (min-width: 640px) {
+  .ch {
+    width: 210px; min-width: 210px;
+    border-radius: 16px 0 0 16px;
+    padding: 32px 20px 80px;
+    justify-content: flex-start;
+  }
+  /* RTL: sidebar moves to right */
+  .card-face.rtl .ch { border-radius: 0 16px 16px 0; order: 2; }
+}
+.ch-av-wrap {
+  width: 150px; height: 150px; border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.5);
+  padding: 5px; margin-bottom: 14px;
+}
+.ch-av {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 50px; font-weight: 700; color: #fff;
+  overflow: hidden; position: relative;
+}
+.ch-av img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+}
+.ch-name {
+  font-size: 18px; font-weight: 800; color: #fff;
+  letter-spacing: .4px; text-transform: uppercase; line-height: 1.2;
+}
+.ch-role {
+  font-size: 12px; color: rgba(255,255,255,.8);
+  font-style: italic; margin-top: 5px; line-height: 1.4;
+}
+.ch-badge {
+  display: inline-block;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff; font-size: 10px; font-weight: 700;
+  letter-spacing: .5px; text-transform: uppercase;
+  border-radius: 20px; padding: 3px 10px; margin-top: 8px;
+}
+/* Language pill — top-left of header */
+.lang-pill {
+  position: absolute; top: 10px; left: 12px;
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff; font-size: 9px; font-weight: 800;
+  letter-spacing: .6px; border-radius: 4px; padding: 2px 6px;
+}
+/* RTL: pill on right */
+.rtl .lang-pill { left: auto; right: 12px; }
+
+/* ── Card body (scrollable) ── */
+.cb {
+  flex: 1; background: #fff; min-width: 0;
+  overflow-y: auto;
+  padding-bottom: 56px; /* clear the flip corner */
+}
+@media (min-width: 640px) {
+  .cb { border-radius: 0 16px 16px 0; }
+  .card-face.rtl .cb { border-radius: 16px 0 0 16px; order: 1; }
+}
+
+/* ── Demographics ── */
+.demo-strip { background: var(--light); padding: 14px 18px; }
+.demo-strip h3 {
+  font-size: 13px; font-weight: 800; color: var(--col);
+  margin-bottom: 10px; letter-spacing: .2px;
+}
+.demo-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 7px 6px;
+}
+.demo-cell { display: flex; align-items: flex-start; gap: 8px; }
+
+.di {                          /* demo icon box */
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; margin-top: 1px;
+}
+.dt { font-size: 11px; color: #333; line-height: 1.35; }
+.dt strong {
+  display: block; font-size: 10px; color: var(--col);
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: .3px; margin-bottom: 1px;
+}
+
+/* ── Sections ── */
+.section { padding: 13px 18px; border-bottom: 1px solid #efefef; }
+.section:last-child { border-bottom: none; }
+.section.alt { background: var(--bg); }
+.section h3 {
+  font-size: 13px; font-weight: 800; color: var(--col);
+  margin-bottom: 9px;
+  display: flex; align-items: center; gap: 7px;
+}
+
+.sh {                          /* section heading icon */
+  font-size: 15px; flex-shrink: 0; line-height: 1;
+}
+
+/* Bullet list */
+.blist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.blist li { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #333; line-height: 1.5; }
+.bi {
+  font-size: 14px; flex-shrink: 0; line-height: 1; margin-top: 2px;
+}
+.blist li strong { color: #111; }
+
+/* Channel list */
+.clist { display: flex; flex-direction: column; gap: 7px; }
+.ci { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #333; line-height: 1.45; }
+.cib {
+  font-size: 14px; flex-shrink: 0; line-height: 1;
+}
+.ci strong { color: #111; }
+
+/* ── RTL overrides — single consistent approach ──
+   No direction:rtl. Pure flexbox: row-reverse + justify-content:flex-end
+   so every row clusters to the RIGHT with emoji on the far right. ── */
+.rtl .demo-strip h3,
+.rtl .section h3 { justify-content: flex-end; flex-direction: row-reverse; }
+.rtl .demo-cell   { flex-direction: row-reverse; justify-content: flex-end; }
+.rtl .dt          { text-align: right; }
+.rtl .blist li    { flex-direction: row-reverse; justify-content: flex-end; }
+.rtl .blist li span { text-align: right; }
+.rtl .ci          { flex-direction: row-reverse; justify-content: flex-end; }
+.rtl .ci span     { text-align: right; }
+
+/* Footer */
+.card-footer {
+  text-align: center; font-size: 9px; color: #bbb;
+  letter-spacing: .3px; text-transform: uppercase;
+  padding: 10px 0 8px; border-top: 1px solid #f0f0f0; margin-top: 4px;
+}
+
+/* ── Flip corner — ALWAYS anchored to .card-face ──
+   EN face: bottom-RIGHT triangle
+   AR face: bottom-LEFT triangle
+   Position is relative to .card-face (position:relative) ── */
+.flip-corner {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 84px; height: 56px;
+  background: linear-gradient(135deg, transparent 45%, var(--col) 45%);
+  cursor: pointer; z-index: 30;
+  display: flex; align-items: flex-end; justify-content: flex-end;
+  padding: 8px 10px;
+  border-bottom-right-radius: 16px;
+  transition: opacity .2s;
+  pointer-events: auto;
+}
+.flip-corner:hover { opacity: .82; }
+.flip-corner .fc-label {
+  font-size: 11px; font-weight: 800; color: #fff;
+  line-height: 1; letter-spacing: .3px; white-space: nowrap;
+  display: flex; align-items: center; gap: 3px;
+}
+
+/* AR face: corner bottom-LEFT */
+.flip-corner.ar-corner {
+  right: auto; left: 0;
+  background: linear-gradient(225deg, transparent 45%, var(--col) 45%);
+  justify-content: flex-start;
+  padding: 8px 10px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 16px;
+}
+
+/* ── Responsive narrow ── */
+@media (max-width: 520px) {
+  body { padding: 12px 8px 32px; }
+  .thumb-strip { gap: 10px; margin-bottom: 18px; }
+  .thumb-ring { width: 52px; height: 52px; }
+  .thumb-name { font-size: 10px; }
+  .demo-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="thumb-strip" id="thumbs"></div>
+<div id="cards"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   EMOJI ICON MAP
+════════════════════════════════════════════════════════ */
+const SVG = {
+  /* demographics */
+  age:       '🎂', gender:    '👤', location:  '📍',
+  income:    '💰', nation:    '🌍', language:  '🗣️',
+  education: '🎓', ai:        '🤖',
+  /* section headers */
+  goal:      '🎯', pain:      '⚠️', channel:   '🌐',
+  /* goal bullets */
+  target:    '🎯',
+  /* pain bullets */
+  warn:      '⚠️',
+  /* channel bullets */
+  briefing:  '📋', people:    '👥', award:     '🏅',
+  office:    '🏢', lightning: '⚡', chart:     '📊',
+  handshake: '🤝', moon:      '🌙', phone:     '📱',
+  clock:     '⏱️', group:     '👩‍👩‍👧', card:      '💳',
+  camp:      '⛺', globe:     '🌐', laptop:    '💻',
+};
+
+function icon(name) { return SVG[name] || '●'; }
+
+/* ════════════════════════════════════════════════════════
+   PERSONA DATA  — icon keys reference SVG library above
+════════════════════════════════════════════════════════ */
+const DEMO_ICONS = ['age','gender','location','income','nation','language','education','ai'];
+
+const personas = [
+
+  /* 1 ── Shama — Government — Blue */
+  { id:"shama", theme:"blue", image:"shama.png",
+    en:{lang:"EN", name:"SHAMA AL ZAROONI",
+        role:"Head of Training & Development, Dubai Courts",
+        badge:"Government",
+        demo:[
+          {label:"Age",          val:"42 years"},
+          {label:"Gender",       val:"Female"},
+          {label:"Location",     val:"Jumeirah, Dubai"},
+          {label:"Income / Mo.", val:"AED 40,000–50,000"},
+          {label:"Nationality",  val:"Emirati"},
+          {label:"Languages",    val:"Arabic, English"},
+          {label:"Education",    val:"MSc HRM, Zayed University"},
+          {label:"AI Level",     val:"Intermediate"},
+        ],
+        goals:[
+          "<strong>Deploy AI in Court Operations:</strong> Apply AI tools for case management, translation, and legal research across Dubai Courts.",
+          "<strong>Build Institutional AI Culture:</strong> Create a framework that empowers department heads to evaluate and adopt AI solutions confidently.",
+          "<strong>Regional Leadership:</strong> Position Dubai Courts as a pioneering model for AI-driven judicial innovation across the Arab world.",
+        ],
+        pains:[
+          "<strong>Fear of HR impact:</strong> AI adoption may be perceived as reducing job opportunities for Emiratis — politically sensitive under Emiratisation.",
+          "<strong>Vendor trust gap:</strong> Flooded with marketing pitches with no clear standards to distinguish genuine solutions from hype.",
+          "<strong>Upskilling 2,000+ staff:</strong> Employees at vastly different technology literacy levels with few practical government models.",
+        ],
+        channels:[
+          {icon:"briefing",  text:"<strong>Executive briefings</strong> with Arabic materials and government sector case studies"},
+          {icon:"people",    text:"<strong>Cohort learning</strong> — alongside other government leaders"},
+          {icon:"award",     text:"<strong>Certificate programmes</strong> transferable to her 12-person direct team"},
+          {icon:"office",    text:"<strong>In-person or blended training</strong> respecting Sun–Thu working hours"},
+        ],
+    },
+    ar:{lang:"AR", name:"شما الزرعوني",
+        role:"رئيسة التدريب والتطوير، محاكم دبي",
+        badge:"قطاع حكومي",
+        demo:[
+          {label:"العمر",                     val:"42 سنة"},
+          {label:"الجنس",                     val:"أنثى"},
+          {label:"الموقع",                    val:"جميرة، دبي"},
+          {label:"الدخل الشهري",              val:"40,000–50,000 درهم"},
+          {label:"الجنسية",                   val:"إماراتية"},
+          {label:"اللغات",                    val:"العربية، الإنجليزية"},
+          {label:"المؤهل",                    val:"ماجستير موارد بشرية، جامعة زايد"},
+          {label:"مستوى الذكاء الاصطناعي",   val:"متوسط"},
+        ],
+        goals:[
+          "<strong>نشر الذكاء الاصطناعي في عمليات المحاكم:</strong> تطبيق أدوات الذكاء الاصطناعي لإدارة القضايا والترجمة والبحث القانوني.",
+          "<strong>بناء ثقافة ذكاء اصطناعي مؤسسية:</strong> إنشاء إطار عمل يمكّن رؤساء الأقسام من تقييم واعتماد حلول الذكاء الاصطناعي بثقة.",
+          "<strong>ريادة إقليمية:</strong> تموضع محاكم دبي كنموذج رائد في الابتكار القضائي على المستوى العربي.",
+        ],
+        pains:[
+          "<strong>الخوف من تأثر الموارد البشرية:</strong> إدخال الذكاء الاصطناعي قد يُنظر إليه على أنه يقلل من فرص التوظيف للإماراتيين.",
+          "<strong>من نثق به من بائعي الحلول؟</strong> غارقة في عروض تسويقية بدون معايير واضحة لتمييز الحلول الفعلية.",
+          "<strong>إعادة تأهيل 2,000+ موظف:</strong> موظفوها على مستويات مختلفة من الإلمام بالتكنولوجيا.",
+        ],
+        channels:[
+          {icon:"briefing", text:"<strong>إحاطات تنفيذية</strong> بمواد عربية وأمثلة من القطاع الحكومي"},
+          {icon:"people",   text:"<strong>نموذج التعلم الجماعي</strong> — التعلم بجانب قادة حكوميين آخرين"},
+          {icon:"award",    text:"<strong>برامج شهادات منظمة</strong> يمكن نقل خبراتها إلى فريقها المباشر"},
+          {icon:"office",   text:"<strong>تدريب حضوري أو مختلط</strong> يحترم ساعات العمل (الأحد–الخميس)"},
+        ],
+    }
+  },
+
+  /* 2 ── Liam — Commercial — Green */
+  { id:"liam", theme:"green", image:"liam.png",
+    en:{lang:"EN", name:"LIAM O'SULLIVAN",
+        role:"VP, Corporate & Institutional Banking, Standard Chartered Dubai",
+        badge:"Commercial",
+        demo:[
+          {label:"Age",          val:"49 years"},
+          {label:"Gender",       val:"Male"},
+          {label:"Location",     val:"Dubai Marina"},
+          {label:"Income / Mo.", val:"AED 100,000–125,000"},
+          {label:"Nationality",  val:"Irish (EU)"},
+          {label:"Languages",    val:"English, Basic Arabic"},
+          {label:"Education",    val:"MBA Trinity Dublin; CFA"},
+          {label:"AI Level",     val:"Strategic"},
+        ],
+        goals:[
+          "<strong>Integrate AI into Banking:</strong> Drive AI adoption in credit risk, AML, and client onboarding for GCC corporate banking.",
+          "<strong>Build Personal AI Expertise:</strong> Lead strategic AI discussions and make multi-million dirham investment decisions confidently.",
+          "<strong>Achieve Competitive Advantage:</strong> Identify how generative AI gives an edge in trade finance ahead of rival banks.",
+        ],
+        pains:[
+          "<strong>AI might erode his role:</strong> At 49, quietly wonders if automation will replace the strategic judgment his career is built on.",
+          "<strong>Distinguishing fact from hype:</strong> Every fintech claims to be 'AI-powered' — no neutral benchmarks to evaluate actual ROI.",
+          "<strong>Upskilling without losing face:</strong> Admitting need for AI training risks appearing behind the curve at VP level.",
+        ],
+        channels:[
+          {icon:"lightning", text:"<strong>Intensive executive programmes</strong> — half-day workshops or immersive weekend sessions"},
+          {icon:"chart",     text:"<strong>Case-study-led learning</strong> from financial services and GCC markets"},
+          {icon:"handshake", text:"<strong>Peer network</strong> of senior cross-sector leaders"},
+          {icon:"moon",      text:"<strong>English delivery</strong> with evening or weekend schedule"},
+        ],
+    },
+    ar:{lang:"AR", name:"ليام أوسوليفان",
+        role:"نائب الرئيس، الخدمات المصرفية للشركات، ستاندرد تشارترد دبي",
+        badge:"قطاع تجاري",
+        demo:[
+          {label:"العمر",                     val:"49 سنة"},
+          {label:"الجنس",                     val:"ذكر"},
+          {label:"الموقع",                    val:"دبي مارينا"},
+          {label:"الدخل الشهري",              val:"100,000–125,000 درهم"},
+          {label:"الجنسية",                   val:"أيرلندية (الاتحاد الأوروبي)"},
+          {label:"اللغات",                    val:"الإنجليزية، العربية الأساسية"},
+          {label:"المؤهل",                    val:"ماجستير إدارة أعمال ترينيتي دبلن؛ CFA"},
+          {label:"مستوى الذكاء الاصطناعي",   val:"استراتيجي"},
+        ],
+        goals:[
+          "<strong>دمج الذكاء الاصطناعي في العمليات المصرفية:</strong> دفع اعتماد الذكاء الاصطناعي في تقييم مخاطر الائتمان ومكافحة غسل الأموال.",
+          "<strong>تطوير خبرته بالذكاء الاصطناعي:</strong> قيادة النقاشات الاستراتيجية واتخاذ قرارات استثمارية بالملايين بثقة.",
+          "<strong>تحقيق ميزة تنافسية:</strong> تحديد كيف يعطيه الذكاء الاصطناعي التوليدي أفضلية في تمويل التجارة.",
+        ],
+        pains:[
+          "<strong>قد يقلل الذكاء الاصطناعي من أهمية دوره:</strong> في سن 49، يتساءل إذا كانت الأتمتة ستستبدل حكمه الاستراتيجي.",
+          "<strong>صعوبة التمييز بين الحقيقة والمبالغة:</strong> كل شركة تقنية مالية تدّعي أنها مدعومة بالذكاء الاصطناعي.",
+          "<strong>تطوير مهاراته دون فقدان الثقة:</strong> الاعتراف بحاجته للتدريب قد يبدو مخاطرة على مستوى نائب رئيس.",
+        ],
+        channels:[
+          {icon:"lightning", text:"<strong>برامج تنفيذية مكثفة</strong> — ورش عمل لنصف يوم أو جلسات انغماس نهاية الأسبوع"},
+          {icon:"chart",     text:"<strong>قائمة على دراسات حالة</strong> من قطاع الخدمات المالية والأسواق الخليجية"},
+          {icon:"handshake", text:"<strong>شبكة أقران</strong> من كبار القادة عبر القطاعات المختلفة"},
+          {icon:"moon",      text:"<strong>تسليم باللغة الإنجليزية</strong> بساعات مسائية أو نهاية أسبوع"},
+        ],
+    }
+  },
+
+  /* 3 ── Bati — Student — Orange */
+  { id:"bati", theme:"orange", image:"bati.png",
+    en:{lang:"EN", name:"BATI AL KA'BI",
+        role:"BSc Tourism & Hospitality, University of Dubai (Year 3)",
+        badge:"Student",
+        demo:[
+          {label:"Age",          val:"21 years"},
+          {label:"Gender",       val:"Male"},
+          {label:"Location",     val:"Al Warqa, Dubai"},
+          {label:"Income / Mo.", val:"AED 13,000"},
+          {label:"Nationality",  val:"Emirati"},
+          {label:"Languages",    val:"Arabic, English, Mandarin"},
+          {label:"Education",    val:"BSc Tourism & Hospitality"},
+          {label:"AI Level",     val:"Beginner+"},
+        ],
+        goals:[
+          "<strong>Apply AI to Tourism:</strong> Build chatbots, smart recommendation systems, and dynamic pricing tools for hotels and resorts.",
+          "<strong>Build a Standout Portfolio:</strong> Create real AI projects that differentiate him in the job market and support his startup dreams.",
+          "<strong>Master Generative AI Tools:</strong> Develop prompt engineering skills to prototype a personalised tourism platform.",
+        ],
+        pains:[
+          "<strong>Will AI make his degree obsolete?</strong> News about AI replacing service sector jobs creates anxiety about his chosen field.",
+          "<strong>Separating fact from marketing hype:</strong> Exposed daily to polished AI demos on social media — hard to know which tools are genuinely useful.",
+          "<strong>Doesn't know where to start:</strong> Hundreds of courses available with no clear way to identify which are quality, relevant, and affordable.",
+        ],
+        channels:[
+          {icon:"moon",      text:"<strong>Evening and weekend workshops</strong> that don't conflict with university schedule"},
+          {icon:"laptop",    text:"<strong>Hands-on projects</strong> over lectures — build real prototypes for his portfolio"},
+          {icon:"phone",     text:"<strong>Bilingual content</strong> (Arabic/English) accessible on smartphone"},
+          {icon:"award",     text:"<strong>Mentoring and competitions</strong> — connections with incubators and accelerators"},
+        ],
+    },
+    ar:{lang:"AR", name:"بطي الكعبي",
+        role:"بكالوريوس السياحة والضيافة، جامعة دبي (السنة الثالثة)",
+        badge:"طالب جامعي",
+        demo:[
+          {label:"العمر",                     val:"21 سنة"},
+          {label:"الجنس",                     val:"ذكر"},
+          {label:"الموقع",                    val:"الورقاء، دبي"},
+          {label:"الدخل الشهري",              val:"13,000 درهم"},
+          {label:"الجنسية",                   val:"إماراتي"},
+          {label:"اللغات",                    val:"العربية، الإنجليزية، الماندرين"},
+          {label:"المؤهل",                    val:"بكالوريوس السياحة والضيافة"},
+          {label:"مستوى الذكاء الاصطناعي",   val:"مبتدئ+"},
+        ],
+        goals:[
+          "<strong>تطبيق الذكاء الاصطناعي على السياحة:</strong> بناء روبوتات محادثة وأنظمة توصيات ذكية وأدوات تسعير ديناميكي.",
+          "<strong>بناء محفظة احترافية متميزة:</strong> إنشاء مشاريع عملية تميزه في سوق العمل وتدعم أحلامه في ريادة الأعمال.",
+          "<strong>إتقان أدوات الذكاء الاصطناعي التوليدي:</strong> تطوير مهارات صياغة الأوامر لنموذج أولي لمنصة سياحية شخصية.",
+        ],
+        pains:[
+          "<strong>هل سيجعل الذكاء الاصطناعي تخصصه قديماً؟</strong> الأخبار عن استبدال وظائف قطاع الخدمات تقلقه بشأن مستقبله.",
+          "<strong>الفصل بين الحقيقة والمبالغة التسويقية:</strong> يشاهد يومياً عروضاً للذكاء الاصطناعي — صعب معرفة أي الأدوات مفيدة فعلاً.",
+          "<strong>لا يعرف من أين يبدأ:</strong> مئات الدورات متاحة بلا طريقة واضحة لمعرفة أيها ذو جودة وملائم لميزانيته.",
+        ],
+        channels:[
+          {icon:"moon",   text:"<strong>ورش عمل مسائية وفي نهايات الأسبوع</strong> لا تتعارض مع جدول الدراسة الجامعية"},
+          {icon:"laptop", text:"<strong>مشاريع عملية بدلاً من المحاضرات</strong> — بناء نماذج حقيقية لمحفظته"},
+          {icon:"phone",  text:"<strong>محتوى ثنائي اللغة</strong> (عربي/إنجليزي) متاح على الهاتف الذكي"},
+          {icon:"award",  text:"<strong>إرشاد من متخصصين ومسابقات</strong> — اتصالات مع حاضنات الأعمال"},
+        ],
+    }
+  },
+
+  /* 4 ── Priya — Housewife & Freelancer — Orange */
+  { id:"priya", theme:"orange", image:"priya.png",
+    en:{lang:"EN", name:"PRIYA VENKATESH",
+        role:"Freelance Social Media Manager / Stay-at-Home Mother",
+        badge:"Housewife & Freelancer",
+        demo:[
+          {label:"Age",              val:"36 years"},
+          {label:"Gender",           val:"Female"},
+          {label:"Location",         val:"Al Nahda, Dubai"},
+          {label:"Family Income/Mo.",val:"AED 22,000–28,000"},
+          {label:"Nationality",      val:"Indian (Resident)"},
+          {label:"Languages",        val:"Hindi, English, Tamil"},
+          {label:"Education",        val:"BCom Mumbai; Dig. Marketing"},
+          {label:"AI Level",         val:"Beginner"},
+        ],
+        goals:[
+          "<strong>Gain AI Skills to Re-enter the Job Market:</strong> Learn practical tools like ChatGPT and AI data analysis to return to marketing or EdTech.",
+          "<strong>Upgrade Her Freelance Services:</strong> Use AI to improve quality of social media work and command higher client rates.",
+          "<strong>Rebuild Professional Confidence:</strong> Prove that her 8-year career gap doesn't mean she's fallen behind on modern developments.",
+        ],
+        pains:[
+          "<strong>Fear of permanent market exclusion:</strong> AI transformed marketing while she was away — the gap feels insurmountable.",
+          "<strong>Can't tell real tools from misleading ads:</strong> Doesn't know which AI tools are worth learning and which will be obsolete.",
+          "<strong>Professional development feels impossible:</strong> Three children, no home help, very limited budget — regular study is a luxury.",
+        ],
+        channels:[
+          {icon:"phone",     text:"<strong>Self-paced online courses</strong> followable on smartphone in short flexible sessions"},
+          {icon:"clock",     text:"<strong>Short lessons</strong> — 20–30 min with weekly live Q&A sessions"},
+          {icon:"group",     text:"<strong>Women's learning groups</strong> with a WhatsApp support community"},
+          {icon:"card",      text:"<strong>Affordable or grant-based programmes</strong> — scholarships or pay-after-employment"},
+        ],
+    },
+    ar:{lang:"AR", name:"بريا فينكاتش",
+        role:"مديرة وسائط اجتماعية مستقلة / أم في المنزل",
+        badge:"ربة منزل ومستقلة",
+        demo:[
+          {label:"العمر",                     val:"36 سنة"},
+          {label:"الجنس",                     val:"أنثى"},
+          {label:"الموقع",                    val:"النهدة، دبي"},
+          {label:"دخل الأسرة الشهري",         val:"22,000–28,000 درهم"},
+          {label:"الجنسية",                   val:"هندية (إقامة)"},
+          {label:"اللغات",                    val:"الهندية، الإنجليزية، التاميلية"},
+          {label:"المؤهل",                    val:"بكالوريوس تجارة مومباي؛ دبلوم تسويق رقمي"},
+          {label:"مستوى الذكاء الاصطناعي",   val:"مبتدئ"},
+        ],
+        goals:[
+          "<strong>اكتساب مهارات الذكاء الاصطناعي للعودة لسوق العمل:</strong> تعلم أدوات عملية مثل ChatGPT للعودة إلى قطاع التسويق.",
+          "<strong>تحسين خدماتها كمستقلة:</strong> استخدام الذكاء الاصطناعي لتحسين جودة عملها والتقاضي أسعاراً أعلى.",
+          "<strong>استعادة ثقتها المهنية:</strong> إثبات أن توقفها الوظيفي لمدة 8 سنوات لا يعني تخلفها عن التطورات الحديثة.",
+        ],
+        pains:[
+          "<strong>خوف من الخروج من السوق للأبد:</strong> الذكاء الاصطناعي غيّر مجال التسويق بينما كانت بعيدة — الفجوة تبدو لا يمكن تجاوزها.",
+          "<strong>عدم القدرة على التمييز بين الحقيقة والإعلانات:</strong> لا تعرف أي أدوات الذكاء الاصطناعي تستحق وقتها.",
+          "<strong>شعور بأن التطوير المهني مستحيل:</strong> ثلاثة أطفال، بلا مساعدة في البيت، ميزانية محدودة جداً.",
+        ],
+        channels:[
+          {icon:"phone", text:"<strong>دورات إلكترونية بسرعة ذاتية</strong> يمكن متابعتها على الهاتف في أوقات قصيرة مرنة"},
+          {icon:"clock", text:"<strong>دروس قصيرة</strong> — 20 إلى 30 دقيقة مع جلسات أسئلة وأجوبة أسبوعية"},
+          {icon:"group", text:"<strong>مجموعات تعلم للنساء</strong> مع مجتمع دعم على تطبيق WhatsApp"},
+          {icon:"card",  text:"<strong>أسعار ميسورة أو برامج منح</strong> — منح دراسية أو نموذج الدفع بعد التوظيف"},
+        ],
+    }
+  },
+
+  /* 5 ── Juan Carlos — Foreign Entrepreneur — Purple */
+  { id:"juan", theme:"purple", image:"juan.png",
+    en:{lang:"EN", name:"JUAN CARLOS SÁNCHEZ",
+        role:"Founder & CEO, TurismoAI (Barcelona)",
+        badge:"Foreign Entrepreneur",
+        demo:[
+          {label:"Age",          val:"34 years"},
+          {label:"Gender",       val:"Male"},
+          {label:"Location",     val:"Barcelona, Spain"},
+          {label:"Monthly Rev.", val:"€23,000 (pre-Series A)"},
+          {label:"Nationality",  val:"Spanish (EU)"},
+          {label:"Languages",    val:"Spanish, English, Catalan"},
+          {label:"Education",    val:"BEng CS, UPC; Y Combinator"},
+          {label:"AI Level",     val:"Advanced"},
+        ],
+        goals:[
+          "<strong>Evaluate the Dubai Market:</strong> Conduct real due diligence on AI-tourism app demand across the GCC to validate expansion.",
+          "<strong>Build a Network from Scratch:</strong> Connect with investment funds, government tourism bodies, and B2B partners in Dubai.",
+          "<strong>Leverage Tech-Focused Free Zones:</strong> Access incentives Dubai provides to AI-driven startups for global expansion.",
+        ],
+        pains:[
+          "<strong>Is Dubai a real opportunity or hype?</strong> Needs tangible evidence that the region's AI ambitions translate to actual contracts.",
+          "<strong>Difficulty finding trustworthy partners:</strong> No local network in a relationship-driven market — hard to tell genuine advisors from over-promised deals.",
+          "<strong>Fear of wasting capital:</strong> Limited pre-Series A resources — choosing the wrong market or partners could sink the business.",
+        ],
+        channels:[
+          {icon:"camp",      text:"<strong>Intensive immersive programmes</strong> — 1–2 week bootcamps or accelerators in Dubai"},
+          {icon:"handshake", text:"<strong>High-touch networking</strong> — structured meetings with investors and government bodies"},
+          {icon:"globe",     text:"<strong>Bilingual support</strong> (English/Spanish) with Arabic market briefings"},
+          {icon:"laptop",    text:"<strong>Pre- and post-programme online modules</strong> for participation from Barcelona"},
+        ],
+    },
+    ar:{lang:"AR", name:"خوان كارلوس سانشيز",
+        role:"مؤسس ورئيس تنفيذي، TurismoAI (برشلونة)",
+        badge:"رائد أعمال أجنبي",
+        demo:[
+          {label:"العمر",                     val:"34 سنة"},
+          {label:"الجنس",                     val:"ذكر"},
+          {label:"الموقع",                    val:"برشلونة، إسبانيا"},
+          {label:"الإيراد الشهري",            val:"23,000 يورو (قبل Series A)"},
+          {label:"الجنسية",                   val:"إسبانية (الاتحاد الأوروبي)"},
+          {label:"اللغات",                    val:"الإسبانية، الإنجليزية، الكاتالونية"},
+          {label:"المؤهل",                    val:"بكالوريوس هندسة حاسوب UPC؛ Y Combinator"},
+          {label:"مستوى الذكاء الاصطناعي",   val:"متقدم"},
+        ],
+        goals:[
+          "<strong>تقييم فرصة السوق في دبي:</strong> دراسة فعلية لطلب تطبيقات الذكاء الاصطناعي في السياحة بدول الخليج.",
+          "<strong>بناء شبكة من الصفر:</strong> التواصل مع صناديق استثمار وجهات حكومية مسؤولة عن السياحة وشركاء محتملين.",
+          "<strong>الاستفادة من المناطق الحرة:</strong> الاستفادة من الحوافز التي توفرها دبي للشركات الناشئة الموجهة للذكاء الاصطناعي.",
+        ],
+        pains:[
+          "<strong>هل دبي فرصة حقيقية أم إعلانات؟</strong> يحتاج إلى أدلة ملموسة على أن الطموحات تترجم إلى عقود فعلية.",
+          "<strong>صعوبة إيجاد شركاء موثوقين:</strong> لا شبكة محلية في سوق يعتمد على العلاقات الشخصية.",
+          "<strong>القلق من تبديد رأس المال:</strong> الموارد محدودة — اختيار سوق خاطئ قد يودي بمشروعه.",
+        ],
+        channels:[
+          {icon:"camp",      text:"<strong>برامج غامرة مكثفة</strong> — معسكرات تدريب لمدة 1–2 أسبوع أو برامج تسريع في دبي"},
+          {icon:"handshake", text:"<strong>برامج تواصل عالية الاهتمام</strong> — مقابلات منظمة مع المستثمرين والجهات الحكومية"},
+          {icon:"globe",     text:"<strong>دعم ثنائي اللغة</strong> (إنجليزي/إسباني) مع إحاطات سوق عربية"},
+          {icon:"laptop",    text:"<strong>وحدات إلكترونية قبل وبعد البرنامج</strong> للمشاركة من برشلونة"},
+        ],
+    }
+  },
+];
+
+/* ════════════════════════════════════════════════════════
+   COLOUR MAP
+════════════════════════════════════════════════════════ */
+const COLS = {
+  blue:   { col:'#1a5fa8', mid:'#2d7dd2', light:'#dce9f8', bg:'#f0f5fc' },
+  green:  { col:'#166534', mid:'#16a34a', light:'#dcfce7', bg:'#f0fdf4' },
+  orange: { col:'#c45c00', mid:'#e87722', light:'#fde8d0', bg:'#fff7f0' },
+  purple: { col:'#6b21a8', mid:'#9333ea', light:'#ecdffe', bg:'#f7f0ff' },
+};
+function cssVars(t) {
+  const c = COLS[t];
+  return `--col:${c.col};--mid:${c.mid};--light:${c.light};--bg:${c.bg};`;
+}
+
+/* ════════════════════════════════════════════════════════
+   BUILD DOM
+════════════════════════════════════════════════════════ */
+const thumbsEl = document.getElementById('thumbs');
+const cardsEl  = document.getElementById('cards');
+const flipped  = personas.map(() => false);
+
+personas.forEach((p, i) => {
+  /* Thumbnail */
+  const btn = document.createElement('button');
+  btn.className = `thumb-btn ${p.theme}${i===0?' active':''}`;
+  btn.style.cssText = cssVars(p.theme);
+  btn.setAttribute('aria-label', p.en.name);
+  btn.innerHTML = `
+    <div class="thumb-ring">
+      <div class="thumb-av" style="background:${COLS[p.theme].col}">
+        <span>${p.en.name[0]}</span>
+        <img src="${p.image}" alt="${p.en.name}" loading="lazy" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <div class="thumb-name">${p.en.name.split(' ')[0]}</div>`;
+  btn.addEventListener('click', () => selectP(i));
+  thumbsEl.appendChild(btn);
+
+  /* Card stage */
+  const stage = document.createElement('div');
+  stage.className = `card-stage${i===0?' visible':''}`;
+  stage.id = `stage-${i}`;
+  stage.innerHTML = `
+    <div class="card-inner" id="inner-${i}" style="${cssVars(p.theme)}">
+      ${buildFace(p, p.en, 'front', i, false)}
+      ${buildFace(p, p.ar, 'back',  i, true)}
+    </div>`;
+  cardsEl.appendChild(stage);
+});
+
+/* ── Face builder ── */
+function buildFace(p, d, side, idx, isAr) {
+  const rtl     = isAr ? 'rtl' : '';
+  const arCorner= isAr ? 'ar-corner' : '';
+  /* EN face shows "AR →" (flip to Arabic), AR face shows "← Eng" */
+  const fcLabel = isAr
+    ? `← <span>Eng</span>`
+    : `<span>AR</span> →`;
+
+  const demoRows = d.demo.map((dm, di) => `
+    <div class="demo-cell">
+      <div class="di">${icon(DEMO_ICONS[di])}</div>
+      <div class="dt"><strong>${dm.label}</strong>${dm.val}</div>
+    </div>`).join('');
+
+  const goalRows = d.goals.map(g => `
+    <li><div class="bi">${icon('target')}</div><span>${g}</span></li>`).join('');
+
+  const painRows = d.pains.map(g => `
+    <li><div class="bi warn">${icon('warn')}</div><span>${g}</span></li>`).join('');
+
+  const chanRows = d.channels.map(c => `
+    <div class="ci">
+      <div class="cib">${icon(c.icon)}</div>
+      <span>${c.text}</span>
+    </div>`).join('');
+
+  return `
+  <div class="card-face ${side} ${p.theme} ${rtl}" style="${cssVars(p.theme)}">
+    <!-- HEADER / SIDEBAR -->
+    <div class="ch">
+      <span class="lang-pill">${d.lang}</span>
+      <div class="ch-av-wrap">
+        <div class="ch-av">
+          <span>${d.name[0]}</span>
+          <img src="${p.image}" alt="${d.name}" loading="lazy" onerror="this.style.display='none'">
+        </div>
+      </div>
+      <div class="ch-name">${d.name}</div>
+      <div class="ch-role">${d.role}</div>
+      <div class="ch-badge">${d.badge}</div>
+    </div>
+    <!-- BODY -->
+    <div class="cb">
+      <div class="demo-strip">
+        <h3>${isAr ? 'البيانات الديموغرافية' : 'Demographics'}</h3>
+        <div class="demo-grid">${demoRows}</div>
+      </div>
+      <div class="section">
+        <h3><span class="sh">${icon('goal')}</span>${isAr ? 'الأهداف والدوافع' : 'Goals &amp; Motivations'}</h3>
+        <ul class="blist">${goalRows}</ul>
+      </div>
+      <div class="section alt">
+        <h3><span class="sh">${icon('pain')}</span>${isAr ? 'التحديات ودواعي القلق' : 'Challenges &amp; Pain Points'}</h3>
+        <ul class="blist">${painRows}</ul>
+      </div>
+      <div class="section">
+        <h3><span class="sh">${icon('channel')}</span>${isAr ? 'القنوات والمحتوى المفضل' : 'Preferred Channels &amp; Content'}</h3>
+        <div class="clist">${chanRows}</div>
+      </div>
+      <div class="card-footer">Dubai AI Centre &nbsp;·&nbsp; مركز دبي للذكاء الاصطناعي</div>
+    </div>
+    <!-- FLIP CORNER — anchored to .card-face, NOT inside .cb -->
+    <div class="flip-corner ${arCorner}" onclick="flipCard(${idx})">
+      <div class="fc-label">${fcLabel}</div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   INTERACTIONS
+════════════════════════════════════════════════════════ */
+function selectP(i) {
+  document.querySelectorAll('.thumb-btn').forEach((b,j)   => b.classList.toggle('active', j===i));
+  document.querySelectorAll('.card-stage').forEach((s,j)  => s.classList.toggle('visible', j===i));
+}
+
+function flipCard(i) {
+  flipped[i] = !flipped[i];
+  document.getElementById(`inner-${i}`).classList.toggle('flipped', flipped[i]);
+  syncH(i);
+}
+
+function syncH(i) {
+  const inner = document.getElementById(`inner-${i}`);
+  const front = inner.querySelector('.card-face.front');
+  const back  = inner.querySelector('.card-face.back');
+  /* Temporarily un-transform back face to measure its natural height */
+  const saved = { pos: back.style.position, tf: back.style.transform, vis: back.style.visibility };
+  back.style.position   = 'relative';
+  back.style.transform  = 'none';
+  back.style.visibility = 'hidden';
+  const h = Math.max(front.scrollHeight, back.scrollHeight);
+  back.style.position   = saved.pos;
+  back.style.transform  = saved.tf;
+  back.style.visibility = saved.vis;
+  inner.style.height = h + 'px';
+}
+
+window.addEventListener('load',   () => personas.forEach((_,i) => syncH(i)));
+window.addEventListener('resize', () => personas.forEach((_,i) => syncH(i)));
+</script>
+</body>
+</html>
