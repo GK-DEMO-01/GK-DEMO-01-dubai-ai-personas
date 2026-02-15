@@ -336,8 +336,8 @@ body {
 .poster-overlay.open { display: flex; }
 .poster-title {
   font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 42px; font-weight: 200;
-  color: #fff; letter-spacing: 6px;
+  font-size: clamp(20px, 5vw, 42px); font-weight: 200;
+  color: #fff; letter-spacing: clamp(2px, 1vw, 6px);
   text-transform: uppercase;
 }
 .poster-overlay img {
