@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dubai AI Centre — Personas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,6 +22,14 @@ body {
 .green  { --col:#166534; --mid:#16a34a; --light:#dcfce7; --bg:#f0fdf4; }
 .orange { --col:#c45c00; --mid:#e87722; --light:#fde8d0; --bg:#fff7f0; }
 .purple { --col:#6b21a8; --mid:#9333ea; --light:#ecdffe; --bg:#f7f0ff; }
+
+/* ── Section label ── */
+.section-label {
+  text-align: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: #888;
+  margin-bottom: 12px;
+}
 
 /* ── Thumbnail strip ── */
 .thumb-strip {
@@ -177,8 +188,8 @@ body {
 /* ── Demographics ── */
 .demo-strip { background: var(--light); padding: 14px 18px; }
 .demo-strip h3 {
-  font-size: 13px; font-weight: 800; color: var(--col);
-  margin-bottom: 10px; letter-spacing: .2px;
+  font-size: 13px; font-weight: 700; color: var(--col);
+  margin-bottom: 10px; letter-spacing: 1.2px; text-transform: uppercase;
 }
 .demo-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 7px 6px;
@@ -202,14 +213,11 @@ body {
 .section:last-child { border-bottom: none; }
 .section.alt { background: var(--bg); }
 .section h3 {
-  font-size: 13px; font-weight: 800; color: var(--col);
-  margin-bottom: 9px;
-  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 700; color: var(--col);
+  margin-bottom: 9px; letter-spacing: 1.2px; text-transform: uppercase;
 }
 
-.sh {                          /* section heading icon */
-  font-size: 15px; flex-shrink: 0; line-height: 1;
-}
+.sh { display: none; }
 
 /* Bullet list */
 .blist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
@@ -227,17 +235,28 @@ body {
 }
 .ci strong { color: #111; }
 
+/* ── RTL font ── */
+.rtl, .rtl * { font-family: 'Tajawal', 'Segoe UI', Arial, sans-serif; }
+
 /* ── RTL overrides — single consistent approach ──
    No direction:rtl. Pure flexbox: row-reverse + justify-content:flex-end
    so every row clusters to the RIGHT with emoji on the far right. ── */
 .rtl .demo-strip h3,
-.rtl .section h3 { justify-content: flex-end; flex-direction: row-reverse; }
+.rtl .section h3 { text-align: right; }
 .rtl .demo-cell   { flex-direction: row-reverse; justify-content: flex-end; }
 .rtl .dt          { text-align: right; }
 .rtl .blist li    { flex-direction: row-reverse; justify-content: flex-end; }
 .rtl .blist li span { text-align: right; }
 .rtl .ci          { flex-direction: row-reverse; justify-content: flex-end; }
 .rtl .ci span     { text-align: right; }
+
+/* Media Preferences empty space */
+.media-notes {
+  min-height: 80px;
+  border: 1.5px dashed var(--col);
+  border-radius: 6px;
+  opacity: .3;
+}
 
 /* Footer */
 .card-footer {
@@ -287,10 +306,76 @@ body {
   .thumb-name { font-size: 10px; }
   .demo-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Poster button (above thumbs) ── */
+.poster-btn {
+  display: block;
+  margin: 0 auto 18px;
+  background: #fff;
+  border: 2px solid #ccd;
+  border-radius: 10px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 700; color: #444;
+  display: flex; align-items: center; gap: 7px;
+  transition: border-color .2s, box-shadow .2s;
+  width: fit-content;
+}
+.poster-btn:hover { border-color: #999; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.poster-btn-icon { font-size: 18px; line-height: 1; }
+
+/* ── Fullscreen overlay ── */
+.poster-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.88);
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 18px;
+}
+.poster-overlay.open { display: flex; }
+.poster-title {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 42px; font-weight: 200;
+  color: #fff; letter-spacing: 6px;
+  text-transform: uppercase;
+}
+.poster-overlay img {
+  max-width: 95vw; max-height: 85vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 48px rgba(0,0,0,.6);
+  object-fit: contain;
+}
+/* Collapse button — bottom-right corner of overlay */
+.poster-collapse {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #fff;
+  border: none; border-radius: 50px;
+  padding: 9px 18px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 700; color: #333;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  transition: opacity .2s;
+}
+.poster-collapse:hover { opacity: .85; }
 </style>
 </head>
 <body>
 
+<!-- Poster expand button -->
+<button class="poster-btn" onclick="openPoster()">
+  🏛️ Message House
+</button>
+
+<!-- Fullscreen poster overlay -->
+<div class="poster-overlay" id="posterOverlay" onclick="closePoster()">
+  <div class="poster-title" onclick="event.stopPropagation()">The Message House</div>
+  <img src="message_house.png" alt="Personas Overview" onclick="event.stopPropagation()">
+  <button class="poster-collapse" onclick="closePoster()">✕ &nbsp;Collapse</button>
+</div>
+
+<div class="section-label">The Target Personas</div>
 <div class="thumb-strip" id="thumbs"></div>
 <div id="cards"></div>
 
@@ -304,7 +389,7 @@ const SVG = {
   income:    '💰', nation:    '🌍', language:  '🗣️',
   education: '🎓', ai:        '🤖',
   /* section headers */
-  goal:      '🎯', pain:      '⚠️', channel:   '🌐',
+  goal:      '🎯', pain:      '⚠️', channel:   '🌐', media: '📺',
   /* goal bullets */
   target:    '🎯',
   /* pain bullets */
@@ -357,6 +442,7 @@ const personas = [
           {icon:"award",     text:"<strong>Certificate programmes</strong> transferable to her 12-person direct team"},
           {icon:"office",    text:"<strong>In-person or blended training</strong> respecting Sun–Thu working hours"},
         ],
+        media:[],
     },
     ar:{lang:"AR", name:"شما الزرعوني",
         role:"رئيسة التدريب والتطوير، محاكم دبي",
@@ -387,6 +473,7 @@ const personas = [
           {icon:"award",    text:"<strong>برامج شهادات منظمة</strong> يمكن نقل خبراتها إلى فريقها المباشر"},
           {icon:"office",   text:"<strong>تدريب حضوري أو مختلط</strong> يحترم ساعات العمل (الأحد–الخميس)"},
         ],
+        media:[],
     }
   },
 
@@ -421,6 +508,7 @@ const personas = [
           {icon:"handshake", text:"<strong>Peer network</strong> of senior cross-sector leaders"},
           {icon:"moon",      text:"<strong>English delivery</strong> with evening or weekend schedule"},
         ],
+        media:[],
     },
     ar:{lang:"AR", name:"ليام أوسوليفان",
         role:"نائب الرئيس، الخدمات المصرفية للشركات، ستاندرد تشارترد دبي",
@@ -451,12 +539,13 @@ const personas = [
           {icon:"handshake", text:"<strong>شبكة أقران</strong> من كبار القادة عبر القطاعات المختلفة"},
           {icon:"moon",      text:"<strong>تسليم باللغة الإنجليزية</strong> بساعات مسائية أو نهاية أسبوع"},
         ],
+        media:[],
     }
   },
 
-  /* 3 ── Bati — Student — Orange */
-  { id:"bati", theme:"orange", image:"bati.png",
-    en:{lang:"EN", name:"BATI AL KA'BI",
+  /* 3 ── Butti — Student — Orange */
+  { id:"butti", theme:"orange", image:"bati.png",
+    en:{lang:"EN", name:"BUTTI AL KA'BI",
         role:"BSc Tourism & Hospitality, University of Dubai (Year 3)",
         badge:"Student",
         demo:[
@@ -485,6 +574,7 @@ const personas = [
           {icon:"phone",     text:"<strong>Bilingual content</strong> (Arabic/English) accessible on smartphone"},
           {icon:"award",     text:"<strong>Mentoring and competitions</strong> — connections with incubators and accelerators"},
         ],
+        media:[],
     },
     ar:{lang:"AR", name:"بطي الكعبي",
         role:"بكالوريوس السياحة والضيافة، جامعة دبي (السنة الثالثة)",
@@ -515,6 +605,7 @@ const personas = [
           {icon:"phone",  text:"<strong>محتوى ثنائي اللغة</strong> (عربي/إنجليزي) متاح على الهاتف الذكي"},
           {icon:"award",  text:"<strong>إرشاد من متخصصين ومسابقات</strong> — اتصالات مع حاضنات الأعمال"},
         ],
+        media:[],
     }
   },
 
@@ -549,6 +640,7 @@ const personas = [
           {icon:"group",     text:"<strong>Women's learning groups</strong> with a WhatsApp support community"},
           {icon:"card",      text:"<strong>Affordable or grant-based programmes</strong> — scholarships or pay-after-employment"},
         ],
+        media:[],
     },
     ar:{lang:"AR", name:"بريا فينكاتش",
         role:"مديرة وسائط اجتماعية مستقلة / أم في المنزل",
@@ -579,6 +671,7 @@ const personas = [
           {icon:"group", text:"<strong>مجموعات تعلم للنساء</strong> مع مجتمع دعم على تطبيق WhatsApp"},
           {icon:"card",  text:"<strong>أسعار ميسورة أو برامج منح</strong> — منح دراسية أو نموذج الدفع بعد التوظيف"},
         ],
+        media:[],
     }
   },
 
@@ -613,6 +706,7 @@ const personas = [
           {icon:"globe",     text:"<strong>Bilingual support</strong> (English/Spanish) with Arabic market briefings"},
           {icon:"laptop",    text:"<strong>Pre- and post-programme online modules</strong> for participation from Barcelona"},
         ],
+        media:[],
     },
     ar:{lang:"AR", name:"خوان كارلوس سانشيز",
         role:"مؤسس ورئيس تنفيذي، TurismoAI (برشلونة)",
@@ -643,6 +737,7 @@ const personas = [
           {icon:"globe",     text:"<strong>دعم ثنائي اللغة</strong> (إنجليزي/إسباني) مع إحاطات سوق عربية"},
           {icon:"laptop",    text:"<strong>وحدات إلكترونية قبل وبعد البرنامج</strong> للمشاركة من برشلونة"},
         ],
+        media:[],
     }
   },
 ];
@@ -757,6 +852,10 @@ function buildFace(p, d, side, idx, isAr) {
         <h3><span class="sh">${icon('channel')}</span>${isAr ? 'القنوات والمحتوى المفضل' : 'Preferred Channels &amp; Content'}</h3>
         <div class="clist">${chanRows}</div>
       </div>
+      <div class="section alt media-section">
+        <h3><span class="sh">${icon('media')}</span>${isAr ? 'تفضيلات إعلامية' : 'Media Preferences'}</h3>
+        <div class="media-notes"></div>
+      </div>
       <div class="card-footer">Dubai AI Centre &nbsp;·&nbsp; مركز دبي للذكاء الاصطناعي</div>
     </div>
     <!-- FLIP CORNER — anchored to .card-face, NOT inside .cb -->
@@ -798,6 +897,18 @@ function syncH(i) {
 
 window.addEventListener('load',   () => personas.forEach((_,i) => syncH(i)));
 window.addEventListener('resize', () => personas.forEach((_,i) => syncH(i)));
+
+/* ── Poster overlay ── */
+function openPoster() {
+  document.getElementById('posterOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePoster() {
+  document.getElementById('posterOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+/* Close on Escape key */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePoster(); });
 </script>
 </body>
 </html>
