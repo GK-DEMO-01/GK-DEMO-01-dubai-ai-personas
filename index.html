@@ -250,14 +250,6 @@ body {
 .rtl .ci          { flex-direction: row-reverse; justify-content: flex-end; }
 .rtl .ci span     { text-align: right; }
 
-/* Media Preferences empty space */
-.media-notes {
-  min-height: 80px;
-  border: 1.5px dashed var(--col);
-  border-radius: 6px;
-  opacity: .3;
-}
-
 /* Footer */
 .card-footer {
   text-align: center; font-size: 9px; color: #bbb;
@@ -479,9 +471,9 @@ const DEMO_ICONS = ['age','gender','location','income','nation','language','educ
 
 const personas = [
 
-  /* 1 ── Shama — Government — Blue */
-  { id:"shama", theme:"blue", image:"shama.png",
-    en:{lang:"EN", name:"SHAMA AL ZAROONI",
+  /* 1 ── Shamma — Government — Blue */
+  { id:"shamma", theme:"blue", image:"shama.png",
+    en:{lang:"EN", name:"SHAMMA AL ZAROONI",
         role:"Corporate Communication Officer",
         badge:"Corporate Communication Officer",
         demo:[
@@ -508,11 +500,14 @@ const personas = [
           {icon:"briefing",  text:"<strong>Executive briefings</strong> with Arabic materials and government sector case studies"},
           {icon:"people",    text:"<strong>Cohort learning</strong> — alongside other government leaders"},
           {icon:"award",     text:"<strong>Certificate programmes</strong> transferable to her 12-person direct team"},
-          {icon:"office",    text:"<strong>In-person or blended training</strong> respecting Sun–Thu working hours"},
+          {icon:"office",    text:"<strong>In-person or blended training</strong> respecting Monday–Friday working hours"},
         ],
-        media:[],
+        media:[
+          {icon:"phone", text:"<strong>Instagram</strong> — visual updates and stories"},
+          {icon:"briefing", text:"<strong>Newspapers & Newsletters</strong> — curated industry insights"},
+        ],
     },
-    ar:{lang:"AR", name:"شما الزرعوني",
+    ar:{lang:"AR", name:"شمّا الزرعوني",
         role:"مسؤول الاتصال الحكومي",
         badge:"مسؤول الاتصال الحكومي",
         demo:[
@@ -539,9 +534,12 @@ const personas = [
           {icon:"briefing", text:"<strong>إحاطات تنفيذية</strong> بمواد عربية وأمثلة من القطاع الحكومي"},
           {icon:"people",   text:"<strong>نموذج التعلم الجماعي</strong> — التعلم بجانب قادة حكوميين آخرين"},
           {icon:"award",    text:"<strong>برامج شهادات منظمة</strong> يمكن نقل خبراتها إلى فريقها المباشر"},
-          {icon:"office",   text:"<strong>تدريب حضوري أو مختلط</strong> يحترم ساعات العمل (الأحد–الخميس)"},
+          {icon:"office",   text:"<strong>تدريب حضوري أو مختلط</strong> يحترم ساعات العمل (الاثنين–الجمعة)"},
         ],
-        media:[],
+        media:[
+          {icon:"phone", text:"<strong>إنستغرام</strong> — تحديثات مرئية وقصص"},
+          {icon:"briefing", text:"<strong>الصحف والنشرات الإخبارية</strong> — رؤى مختارة من القطاع"},
+        ],
     }
   },
 
@@ -556,7 +554,7 @@ const personas = [
           {label:"Location",     val:"Dubai Marina"},
           {label:"Income / Mo.", val:"AED 100,000–125,000"},
           {label:"Nationality",  val:"Jordanian"},
-          {label:"Languages",    val:"English, Basic Arabic"},
+          {label:"Languages",    val:"English & Arabic"},
           {label:"Education",    val:"MBA Trinity Dublin; CFA"},
           {label:"AI Level",     val:"Strategic"},
         ],
@@ -576,7 +574,10 @@ const personas = [
           {icon:"handshake", text:"<strong>Peer network</strong> of senior cross-sector leaders"},
           {icon:"moon",      text:"<strong>English delivery</strong> with evening or weekend schedule"},
         ],
-        media:[],
+        media:[
+          {icon:"globe", text:"<strong>YouTube</strong> — long-form analysis and expert talks"},
+          {icon:"briefing", text:"<strong>Newsletters & Blogs</strong> — industry thought leadership"},
+        ],
     },
     ar:{lang:"AR", name:"أاسعد الطراونة",
         role:"نائب الرئيس، الخدمات المصرفية للشركات، ستاندرد تشارترد دبي",
@@ -587,7 +588,7 @@ const personas = [
           {label:"الموقع",                    val:"دبي مارينا"},
           {label:"الدخل الشهري",              val:"100,000–125,000 درهم"},
           {label:"الجنسية",                   val:"أردني"},
-          {label:"اللغات",                    val:"الإنجليزية، العربية الأساسية"},
+          {label:"اللغات",                    val:"الإنجليزية والعربية"},
           {label:"المؤهل",                    val:"ماجستير إدارة أعمال ترينيتي دبلن؛ CFA"},
           {label:"مستوى الذكاء الاصطناعي",   val:"استراتيجي"},
         ],
@@ -607,7 +608,10 @@ const personas = [
           {icon:"handshake", text:"<strong>شبكة أقران</strong> من كبار القادة عبر القطاعات المختلفة"},
           {icon:"moon",      text:"<strong>تسليم باللغة الإنجليزية</strong> بساعات مسائية أو نهاية أسبوع"},
         ],
-        media:[],
+        media:[
+          {icon:"globe", text:"<strong>يوتيوب</strong> — تحليلات مطولة وحوارات مع خبراء"},
+          {icon:"briefing", text:"<strong>النشرات الإخبارية والمدونات</strong> — قيادة فكرية في القطاع"},
+        ],
     }
   },
 
@@ -620,7 +624,7 @@ const personas = [
           {label:"Age",          val:"21 years"},
           {label:"Gender",       val:"Male"},
           {label:"Location",     val:"Al Warqa, Dubai"},
-          {label:"Income / Mo.", val:"AED 13,000"},
+          {label:"Income / Mo.", val:"Family Support"},
           {label:"Nationality",  val:"Emirati"},
           {label:"Languages",    val:"Arabic, English, Mandarin"},
           {label:"Education",    val:"BSc Tourism & Hospitality"},
@@ -641,8 +645,12 @@ const personas = [
           {icon:"laptop",    text:"<strong>Hands-on projects</strong> over lectures — build real prototypes for his portfolio"},
           {icon:"phone",     text:"<strong>Bilingual content</strong> (Arabic/English) accessible on smartphone"},
           {icon:"award",     text:"<strong>Mentoring and competitions</strong> — connections with incubators and accelerators"},
+          {icon:"globe",     text:"<strong>TikTok & social media</strong> — short-form video content and community engagement"},
         ],
-        media:[],
+        media:[
+          {icon:"globe", text:"<strong>TikTok</strong> — short-form videos and trends"},
+          {icon:"phone", text:"<strong>Social media & short-form videos</strong> — bite-sized learning content"},
+        ],
     },
     ar:{lang:"AR", name:"بطي الكعبي",
         role:"بكالوريوس السياحة والضيافة، جامعة دبي (السنة الثالثة)",
@@ -651,7 +659,7 @@ const personas = [
           {label:"العمر",                     val:"21 سنة"},
           {label:"الجنس",                     val:"ذكر"},
           {label:"الموقع",                    val:"الورقاء، دبي"},
-          {label:"الدخل الشهري",              val:"13,000 درهم"},
+          {label:"الدخل الشهري",              val:"دعم الأسرة"},
           {label:"الجنسية",                   val:"إماراتي"},
           {label:"اللغات",                    val:"العربية، الإنجليزية، الماندرين"},
           {label:"المؤهل",                    val:"بكالوريوس السياحة والضيافة"},
@@ -672,8 +680,12 @@ const personas = [
           {icon:"laptop", text:"<strong>مشاريع عملية بدلاً من المحاضرات</strong> — بناء نماذج حقيقية لمحفظته"},
           {icon:"phone",  text:"<strong>محتوى ثنائي اللغة</strong> (عربي/إنجليزي) متاح على الهاتف الذكي"},
           {icon:"award",  text:"<strong>إرشاد من متخصصين ومسابقات</strong> — اتصالات مع حاضنات الأعمال"},
+          {icon:"globe",  text:"<strong>تيك توك ووسائل التواصل الاجتماعي</strong> — محتوى فيديو قصير وتفاعل مجتمعي"},
         ],
-        media:[],
+        media:[
+          {icon:"globe", text:"<strong>تيك توك</strong> — فيديوهات قصيرة واتجاهات"},
+          {icon:"phone", text:"<strong>وسائل التواصل الاجتماعي والفيديو القصير</strong> — محتوى تعليمي مختصر"},
+        ],
     }
   },
 
@@ -756,6 +768,12 @@ function buildFace(p, d, side, idx, isAr) {
       <span>${c.text}</span>
     </div>`).join('');
 
+  const mediaRows = (d.media || []).map(m => `
+    <div class="ci">
+      <div class="cib">${icon(m.icon)}</div>
+      <span>${m.text}</span>
+    </div>`).join('');
+
   return `
   <div class="card-face ${side} ${p.theme} ${rtl}" style="${cssVars(p.theme)}">
     <!-- HEADER / SIDEBAR -->
@@ -791,7 +809,7 @@ function buildFace(p, d, side, idx, isAr) {
       </div>
       <div class="section alt media-section">
         <h3><span class="sh">${icon('media')}</span>${isAr ? 'تفضيلات إعلامية' : 'Media Preferences'}</h3>
-        <div class="media-notes"></div>
+        <div class="clist">${mediaRows}</div>
       </div>
       <div class="card-footer">Dubai AI Centre &nbsp;·&nbsp; مركز دبي للذكاء الاصطناعي</div>
     </div>
